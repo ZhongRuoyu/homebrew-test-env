@@ -10,6 +10,7 @@ RUN <<-"EOF"
   git -C .linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core remote add "${REMOTE}" "${REMOTE_URL}"
   git -C .linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core fetch origin master
   git -C .linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core fetch "${REMOTE}" master
+  brew analytics off
   brew developer on
   brew update
   brew tap homebrew/homebrew-test-bot
