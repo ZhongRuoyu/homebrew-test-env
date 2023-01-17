@@ -2,14 +2,15 @@
 
 ARG BASE_IMAGE=homebrew/brew
 FROM ${BASE_IMAGE}
+WORKDIR /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core
 
 ARG REMOTE
 ARG REMOTE_URL
 RUN <<-"EOF"
   set -e
-  git -C .linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core remote add "${REMOTE}" "${REMOTE_URL}"
-  git -C .linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core fetch origin master
-  git -C .linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core fetch "${REMOTE}" master
+  git remote add "${REMOTE}" "${REMOTE_URL}"
+  git fetch origin master
+  git fetch "${REMOTE}" master
   brew analytics off
   brew developer on
   brew update
@@ -21,5 +22,5 @@ RUN <<-"EOF"
     patchelf \
     vim
   brew cleanup
-  rm -rf .cache
+  rm -rf "$(brew --cache)"
 EOF
