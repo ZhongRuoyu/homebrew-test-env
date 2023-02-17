@@ -24,3 +24,5 @@ RUN <<-"EOF"
   brew cleanup
   rm -rf "$(brew --cache)"
 EOF
+
+ENV HOMEBREW_NO_INSTALL_FROM_API=1
