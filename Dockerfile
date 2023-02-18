@@ -1,8 +1,10 @@
 # syntax=docker/dockerfile:1
 
 ARG BASE_IMAGE=homebrew/brew
-FROM ${BASE_IMAGE}
+FROM "${BASE_IMAGE}"
 WORKDIR /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core
+
+ENV HOMEBREW_NO_INSTALL_FROM_API=1
 
 ARG REMOTE
 ARG REMOTE_URL
@@ -22,5 +24,3 @@ RUN <<-"EOF"
   brew cleanup
   rm -rf "$(brew --cache)"
 EOF
-
-ENV HOMEBREW_NO_INSTALL_FROM_API=1
