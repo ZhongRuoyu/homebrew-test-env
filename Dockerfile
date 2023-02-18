@@ -17,8 +17,6 @@ RUN <<-"EOF"
   brew tap homebrew/homebrew-test-bot
   brew install-bundler-gems
   brew install \
-    gcc \
-    glibc \
     patchelf \
     vim
   brew cleanup
