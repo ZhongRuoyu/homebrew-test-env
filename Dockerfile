@@ -16,7 +16,6 @@ RUN <<-"EOF"
   brew analytics off
   brew developer on
   brew update
-  brew tap homebrew/homebrew-test-bot
   brew install-bundler-gems
   brew install \
     patchelf \
