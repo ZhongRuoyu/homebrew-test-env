@@ -1,0 +1,4 @@
+{
+	"name": "homebrew-test-env",
+	"image": "zhongruoyu/homebrew-test-env:latest"
+}
