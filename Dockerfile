@@ -10,16 +10,21 @@ ARG REMOTE
 ARG REMOTE_URL
 RUN <<-"EOF"
   set -e
+
+  sudo apt-get update
+  sudo apt-get install -y --no-install-recommends \
+    vim
+  sudo apt-get autoremove -y --purge
+  sudo rm -rf /var/lib/apt/lists/*
+
   git remote add "${REMOTE}" "${REMOTE_URL}"
   git fetch origin master
   git fetch "${REMOTE}" master
+
   brew analytics off
   brew developer on
   brew update
   brew install-bundler-gems
-  brew install \
-    patchelf \
-    vim
   brew cleanup
   rm -rf "$(brew --cache)"
 EOF
