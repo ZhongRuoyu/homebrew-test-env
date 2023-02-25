@@ -4,6 +4,7 @@ ARG BASE_IMAGE=homebrew/brew
 FROM "${BASE_IMAGE}"
 WORKDIR /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core
 
+ENV HOMEBREW_DEVELOPER=1
 ENV HOMEBREW_NO_INSTALL_FROM_API=1
 
 ARG REMOTE
