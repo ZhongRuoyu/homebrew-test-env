@@ -19,7 +19,7 @@ jobs:
       matrix:
         target:
           - tags: zhongruoyu/homebrew-test-env:ubuntu22.04,zhongruoyu/homebrew-test-env:latest
-            base-image: homebrew/ubuntu22.04:master
+            base-image: homebrew/ubuntu22.04
     env:
       REMOTE: ZhongRuoyu
       REMOTE_URL: https://github.com/ZhongRuoyu/homebrew-core.git
