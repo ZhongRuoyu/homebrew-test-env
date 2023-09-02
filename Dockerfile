@@ -22,7 +22,6 @@ RUN <<-"EOF"
   git fetch origin master
   git fetch "${REMOTE}" master
 
-  brew analytics off
   brew developer on
   brew update
   brew install-bundler-gems
