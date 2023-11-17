@@ -23,7 +23,7 @@ RUN <<-"EOF"
 
   brew developer on
   brew update
-  brew install-bundler-gems
+  brew install-bundler-gems --groups=all
   brew cleanup
   rm -rf "$(brew --cache)"
 EOF
