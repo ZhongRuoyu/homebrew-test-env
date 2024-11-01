@@ -18,6 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         target:
+          - tags: zhongruoyu/homebrew-test-env:ubuntu24.04
+            base-image: homebrew/ubuntu24.04
           - tags: zhongruoyu/homebrew-test-env:ubuntu22.04,zhongruoyu/homebrew-test-env:latest
             base-image: homebrew/ubuntu22.04
           - tags: zhongruoyu/homebrew-test-env:ubuntu20.04
