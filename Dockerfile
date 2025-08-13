@@ -19,8 +19,8 @@ RUN <<-"EOF"
   sudo rm -rf /var/lib/apt/lists/*
 
   git remote add "${REMOTE}" "${REMOTE_URL}"
-  git fetch origin master
-  git fetch "${REMOTE}" master
+  git fetch origin main
+  git fetch "${REMOTE}" main
 
   brew developer on
   brew update
