@@ -4,8 +4,10 @@ ARG BASE_IMAGE=homebrew/brew
 FROM "${BASE_IMAGE}"
 WORKDIR /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core
 
+ENV HOMEBREW_DEVELOPER=1
 ENV HOMEBREW_NO_AUTOREMOVE=1
 ENV HOMEBREW_NO_INSTALL_FROM_API=1
+ENV HOMEBREW_DOWNLOAD_CONCURRENCY=auto
 
 ARG REMOTE
 ARG REMOTE_URL
@@ -22,7 +24,6 @@ RUN <<-"EOF"
   git fetch origin main
   git fetch "${REMOTE}" main
 
-  brew developer on
   brew update
   brew install-bundler-gems --groups=all
   brew cleanup
