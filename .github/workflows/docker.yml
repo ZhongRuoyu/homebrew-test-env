@@ -12,6 +12,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DOCKERHUB_USERNAME: zhongruoyu
+  DOCKERHUB_REPOSITORY: zhongruoyu/homebrew-test-env
+  GHCR_USERNAME: ${{ github.repository_owner }}
+  GHCR_REPOSITORY: ghcr.io/zhongruoyu/homebrew-test-env
+
 jobs:
   build:
     strategy:
@@ -36,22 +42,34 @@ jobs:
           - tag: ubuntu18.04
             arch: x86_64
             runs-on: ubuntu-latest
+    name: Build ${{ matrix.tag }} (${{ matrix.arch }})
     runs-on: ${{ matrix.runs-on }}
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: zhongruoyu
+          username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USERNAME }}
+          password: ${{ github.token }}
       - name: Build and push Docker image by digest
         id: build
         uses: docker/build-push-action@v6
         with:
           platforms: linux/${{ matrix.arch }}
-          build-args: BASE_IMAGE=homebrew/${{ matrix.tag }}:latest
-          outputs: type=image,name=zhongruoyu/homebrew-test-env,name-canonical=true,push=true,push-by-digest=true
+          build-args: BASE_IMAGE=ghcr.io/homebrew/${{ matrix.tag }}:latest
+          outputs: |
+            type=image,name=${{ env.DOCKERHUB_REPOSITORY }},name-canonical=true,push=true,push-by-digest=true
+            type=image,name=${{ env.GHCR_REPOSITORY }},name-canonical=true,push=true,push-by-digest=true
       - name: Export digest
         run: |
           mkdir -p "$RUNNER_TEMP"/digests
@@ -68,7 +86,6 @@ jobs:
 
   merge:
     needs: build
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -81,14 +98,25 @@ jobs:
             tags: ubuntu20.04 focal
           - primary-tag: ubuntu18.04
             tags: ubuntu18.04 bionic
+    name: Merge ${{ matrix.primary-tag }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: zhongruoyu
+          username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USERNAME }}
+          password: ${{ github.token }}
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
@@ -99,12 +127,15 @@ jobs:
         run: |
           tags=()
           for tag in $TAGS; do
-            tags+=("--tag=zhongruoyu/homebrew-test-env:$tag")
+            tags+=(
+              "--tag=$DOCKERHUB_REPOSITORY:$tag"
+              "--tag=$GHCR_REPOSITORY:$tag"
+            )
           done
 
           images=()
           for digest in "$RUNNER_TEMP"/digests/"$PRIMARY_TAG"-*; do
-            images+=("zhongruoyu/homebrew-test-env@sha256:$(cat "$digest")")
+            images+=("$GHCR_REPOSITORY@sha256:$(cat "$digest")")
           done
 
           docker buildx imagetools create "${tags[@]}" "${images[@]}"
