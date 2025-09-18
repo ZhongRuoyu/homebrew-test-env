@@ -19,15 +19,21 @@ jobs:
       matrix:
         target:
           - tags: zhongruoyu/homebrew-test-env:ubuntu24.04
+            platforms: linux/amd64,linux/arm64
             base-image: homebrew/ubuntu24.04
           - tags: zhongruoyu/homebrew-test-env:ubuntu22.04,zhongruoyu/homebrew-test-env:latest
+            platforms: linux/amd64,linux/arm64
             base-image: homebrew/ubuntu22.04
           - tags: zhongruoyu/homebrew-test-env:ubuntu20.04
+            platforms: linux/amd64
             base-image: homebrew/ubuntu20.04
           - tags: zhongruoyu/homebrew-test-env:ubuntu18.04
+            platforms: linux/amd64
             base-image: homebrew/ubuntu18.04
     runs-on: ubuntu-latest
     steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to Docker Hub
@@ -39,6 +45,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           tags: ${{ matrix.target.tags }}
+          platforms: ${{ matrix.target.platforms }}
           build-args: |
             BASE_IMAGE=${{ matrix.target.base-image }}
             REMOTE=${{ github.repository_owner }}
