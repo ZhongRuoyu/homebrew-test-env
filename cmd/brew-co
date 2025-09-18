@@ -8,18 +8,48 @@ if [[ "$#" -ne 1 ]]; then
 fi
 
 pr="$1"
-ref=""
-local_branch=""
+ref="refs/heads/$pr"
+local_branch="$pr"
+remote="origin"
 
 if [[ "$pr" =~ ^[0-9]+$ ]]; then
   ref="refs/pull/$pr/head"
   local_branch="pr-$pr"
-else
-  ref="refs/heads/$pr"
-  local_branch="$pr"
+
+  while true; do
+    origin_url="$(git remote get-url origin)"
+    repo="$(sed -E 's#^(git@github\.com:|https://github\.com/)([^/]+/[^/.]+)(\.git)?$#\2#' <<<"$origin_url")"
+    if [[ -z "$repo" ]]; then
+      break
+    fi
+
+    pr_info="$(curl -fsSL "https://api.github.com/repos/$repo/pulls/$pr")"
+    if [[ -z "$pr_info" ]]; then
+      break
+    fi
+
+    head_ref="$(jq -r ".head.ref" <<<"$pr_info")"
+    head_repo_owner="$(jq -r ".head.repo.owner.login" <<<"$pr_info")"
+    head_repo_clone_url="$(jq -r ".head.repo.clone_url" <<<"$pr_info")"
+    base_repo_default_branch="$(jq -r ".base.repo.default_branch" <<<"$pr_info")"
+    if [[ -z "$head_ref" ||
+          -z "$head_repo_owner" ||
+          -z "$head_repo_clone_url" ||
+          -z "$base_repo_default_branch" ]]; then
+      break
+    fi
+
+    ref="refs/heads/$head_ref"
+    local_branch="$head_ref"
+    if [[ "$local_branch" = "$base_repo_default_branch" ]]; then
+      local_branch="$head_repo_owner/$head_ref"
+    fi
+    remote="$head_repo_clone_url"
+    break
+  done
 fi
 
-git fetch origin "$ref":"$local_branch"
+git fetch "$remote" "$ref":"$local_branch"
 git checkout "$local_branch"
-git config branch."$local_branch".remote origin
+git config branch."$local_branch".remote "$remote"
 git config branch."$local_branch".merge "$ref"
