@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -e
+
+if [[ "$#" -ne 1 ]]; then
+  echo "Usage: $0 [<number> | <branch>]"
+  exit 1
+fi
+
+pr="$1"
+ref=""
+local_branch=""
+
+if [[ "$pr" =~ ^[0-9]+$ ]]; then
+  ref="refs/pull/$pr/head"
+  local_branch="pr-$pr"
+else
+  ref="refs/heads/$pr"
+  local_branch="$pr"
+fi
+
+git fetch origin "$ref":"$local_branch"
+git checkout "$local_branch"
+git config branch."$local_branch".remote origin
+git config branch."$local_branch".merge "$ref"
