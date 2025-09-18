@@ -15,7 +15,7 @@ concurrency:
 env:
   DOCKERHUB_USERNAME: zhongruoyu
   DOCKERHUB_REPOSITORY: zhongruoyu/homebrew-test-env
-  GHCR_USERNAME: ${{ github.repository_owner }}
+  GHCR_USERNAME: zhongruoyu
   GHCR_REPOSITORY: ghcr.io/zhongruoyu/homebrew-test-env
 
 jobs:
@@ -24,23 +24,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - tag: ubuntu24.04
+          - tag: ubuntu24.04-latest
+            base-image: ghcr.io/homebrew/ubuntu24.04:latest
             arch: x86_64
-            runs-on: ubuntu-latest
-          - tag: ubuntu24.04
+          - tag: ubuntu24.04-latest
+            base-image: ghcr.io/homebrew/ubuntu24.04:latest
             arch: aarch64
-            runs-on: ubuntu-24.04-arm
-          - tag: ubuntu22.04
+          - tag: ubuntu22.04-latest
+            base-image: ghcr.io/homebrew/ubuntu22.04:latest
             arch: x86_64
-            runs-on: ubuntu-latest
-          - tag: ubuntu22.04
+          - tag: ubuntu22.04-latest
+            base-image: ghcr.io/homebrew/ubuntu22.04:latest
             arch: aarch64
-            runs-on: ubuntu-24.04-arm
-          - tag: ubuntu20.04
+          - tag: ubuntu22.04-main
+            base-image: ghcr.io/homebrew/ubuntu22.04:main
             arch: x86_64
-            runs-on: ubuntu-latest
+          - tag: ubuntu22.04-main
+            base-image: ghcr.io/homebrew/ubuntu22.04:main
+            arch: aarch64
+          - tag: ubuntu20.04-latest
+            base-image: ghcr.io/homebrew/ubuntu20.04:latest
+            arch: x86_64
     name: Build ${{ matrix.tag }} (${{ matrix.arch }})
-    runs-on: ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     permissions:
       contents: read
       packages: write
@@ -63,7 +69,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           platforms: linux/${{ matrix.arch }}
-          build-args: BASE_IMAGE=ghcr.io/homebrew/${{ matrix.tag }}:latest
+          build-args: BASE_IMAGE=${{ matrix.base-image }}
           outputs: |
             type=image,name=${{ env.DOCKERHUB_REPOSITORY }},name-canonical=true,push=true,push-by-digest=true
             type=image,name=${{ env.GHCR_REPOSITORY }},name-canonical=true,push=true,push-by-digest=true
@@ -87,11 +93,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - primary-tag: ubuntu24.04
+          - primary-tag: ubuntu24.04-latest
             tags: ubuntu24.04 noble
-          - primary-tag: ubuntu22.04
+          - primary-tag: ubuntu22.04-latest
             tags: ubuntu22.04 jammy latest
-          - primary-tag: ubuntu20.04
+          - primary-tag: ubuntu22.04-main
+            tags: ubuntu22.04-main jammy-main main
+          - primary-tag: ubuntu20.04-latest
             tags: ubuntu20.04 focal
     name: Merge ${{ matrix.primary-tag }}
     runs-on: ubuntu-latest
