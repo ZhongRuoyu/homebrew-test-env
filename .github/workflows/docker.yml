@@ -39,9 +39,6 @@ jobs:
           - tag: ubuntu20.04
             arch: x86_64
             runs-on: ubuntu-latest
-          - tag: ubuntu18.04
-            arch: x86_64
-            runs-on: ubuntu-latest
     name: Build ${{ matrix.tag }} (${{ matrix.arch }})
     runs-on: ${{ matrix.runs-on }}
     permissions:
@@ -96,8 +93,6 @@ jobs:
             tags: ubuntu22.04 jammy latest
           - primary-tag: ubuntu20.04
             tags: ubuntu20.04 focal
-          - primary-tag: ubuntu18.04
-            tags: ubuntu18.04 bionic
     name: Merge ${{ matrix.primary-tag }}
     runs-on: ubuntu-latest
     permissions:
