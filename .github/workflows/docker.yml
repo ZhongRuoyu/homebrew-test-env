@@ -72,11 +72,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tag:
-          - ubuntu24.04
-          - ubuntu22.04
-          - ubuntu20.04
-          - ubuntu18.04
+        include:
+          - primary-tag: ubuntu24.04
+            tags: ubuntu24.04 noble
+          - primary-tag: ubuntu22.04
+            tags: ubuntu22.04 jammy latest
+          - primary-tag: ubuntu20.04
+            tags: ubuntu20.04 focal
+          - primary-tag: ubuntu18.04
+            tags: ubuntu18.04 bionic
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -89,16 +93,21 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ${{ runner.temp }}/digests
-          pattern: digests-${{ matrix.tag }}-*
+          pattern: digests-${{ matrix.primary-tag }}-*
           merge-multiple: true
       - name: Create manifest list and push
         run: |
+          tags=()
+          for tag in $TAGS; do
+            tags+=("--tag=zhongruoyu/homebrew-test-env:$tag")
+          done
+
           images=()
-          for digest in "$RUNNER_TEMP"/digests/"$TAG"-*; do
+          for digest in "$RUNNER_TEMP"/digests/"$PRIMARY_TAG"-*; do
             images+=("zhongruoyu/homebrew-test-env@sha256:$(cat "$digest")")
           done
-          docker buildx imagetools create \
-            --tag=zhongruoyu/homebrew-test-env:"$TAG" \
-            "${images[@]}"
+
+          docker buildx imagetools create "${tags[@]}" "${images[@]}"
         env:
-          TAG: ${{ matrix.tag }}
+          PRIMARY_TAG: ${{ matrix.primary-tag }}
+          TAGS: ${{ matrix.tags }}
