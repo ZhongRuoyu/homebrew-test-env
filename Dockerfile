@@ -20,10 +20,6 @@ RUN <<-"EOF"
   sudo apt-get autoremove -y --purge
   sudo rm -rf /var/lib/apt/lists/*
 
-  git remote add "${REMOTE}" "${REMOTE_URL}"
-  git fetch origin main
-  git fetch "${REMOTE}" main
-
   brew update
   brew install-bundler-gems --groups=all
   brew cleanup
