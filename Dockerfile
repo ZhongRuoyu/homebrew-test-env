@@ -14,15 +14,27 @@ ARG REMOTE_URL
 RUN <<-"EOF"
   set -e
 
-  sudo apt-get update
-  sudo apt-get install -y --no-install-recommends \
-    vim
-  sudo apt-get autoremove -y --purge
-  sudo rm -rf /var/lib/apt/lists/*
-
   brew update
   brew install-bundler-gems --groups=all
   brew tap zhongruoyu/test-env
   brew cleanup
   rm -rf "$(brew --cache)"
+
+  sudo apt-get update
+  sudo apt-get install -y --no-install-recommends \
+    bash-completion \
+    bat \
+    fd-find \
+    ripgrep \
+    vim
+  sudo apt-get autoremove -y --purge
+  sudo rm -rf /var/lib/apt/lists/*
+  mkdir -p ~/.local/bin
+  ln -s /usr/bin/batcat ~/.local/bin/bat
+  ln -s /usr/bin/fdfind ~/.local/bin/fd
+
+  git clone https://github.com/ZhongRuoyu/dotfiles.git ~/.local/share/dotfiles
+  ~/.local/share/dotfiles/install.sh
 EOF
+
+CMD [ "bash", "-il" ]
