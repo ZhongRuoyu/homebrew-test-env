@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "$HOMEBREW_REPOSITORY/Library/Taps/homebrew/homebrew-cask"
