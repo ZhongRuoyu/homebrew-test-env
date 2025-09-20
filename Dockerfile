@@ -29,9 +29,8 @@ RUN <<-"EOF"
     vim
   sudo apt-get autoremove -y --purge
   sudo rm -rf /var/lib/apt/lists/*
-  mkdir -p ~/.local/bin
-  ln -s /usr/bin/batcat ~/.local/bin/bat
-  ln -s /usr/bin/fdfind ~/.local/bin/fd
+  sudo ln -s /usr/bin/batcat /usr/local/bin/bat
+  sudo ln -s /usr/bin/fdfind /usr/local/bin/fd
 
   git clone https://github.com/ZhongRuoyu/dotfiles.git ~/.local/share/dotfiles
   ~/.local/share/dotfiles/install.sh
