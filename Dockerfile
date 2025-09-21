@@ -25,6 +25,7 @@ RUN <<-"EOF"
     bash-completion \
     bat \
     fd-find \
+    fzf \
     ripgrep \
     vim
   sudo apt-get autoremove -y --purge
