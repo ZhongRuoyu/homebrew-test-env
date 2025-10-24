@@ -5,6 +5,7 @@ FROM "${BASE_IMAGE}"
 WORKDIR /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core
 
 ENV HOMEBREW_NO_AUTOREMOVE=1
+ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV HOMEBREW_NO_INSTALL_FROM_API=1
 
 ARG REMOTE
