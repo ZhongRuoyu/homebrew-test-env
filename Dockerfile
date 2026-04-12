@@ -13,6 +13,9 @@ ARG REMOTE_URL
 RUN <<-"EOF"
   set -e
 
+  git clone https://github.com/ZhongRuoyu/dotfiles.git ~/.local/share/dotfiles
+  ~/.local/share/dotfiles/install.sh
+
   brew update
   brew install-bundler-gems --groups=all
   brew tap zhongruoyu/test-env
@@ -31,9 +34,6 @@ RUN <<-"EOF"
   sudo rm -rf /var/lib/apt/lists/*
   sudo ln -s /usr/bin/batcat /usr/local/bin/bat
   sudo ln -s /usr/bin/fdfind /usr/local/bin/fd
-
-  git clone https://github.com/ZhongRuoyu/dotfiles.git ~/.local/share/dotfiles
-  ~/.local/share/dotfiles/install.sh
 EOF
 
 CMD [ "bash", "-il" ]
