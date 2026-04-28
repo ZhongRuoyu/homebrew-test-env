@@ -17,6 +17,7 @@ env:
   DOCKERHUB_REPOSITORY: zhongruoyu/homebrew-test-env
   GHCR_USERNAME: zhongruoyu
   GHCR_REPOSITORY: ghcr.io/zhongruoyu/homebrew-test-env
+  BUILD_CACHE_REPOSITORY: ghcr.io/zhongruoyu/homebrew-test-env/cache
 
 jobs:
   build:
@@ -70,6 +71,8 @@ jobs:
         with:
           platforms: linux/${{ matrix.arch }}
           build-args: BASE_IMAGE=${{ matrix.base-image }}
+          cache-from: type=registry,ref=${{ env.BUILD_CACHE_REPOSITORY }}:${{ matrix.tag }}-${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.BUILD_CACHE_REPOSITORY }}:${{ matrix.tag }}-${{ matrix.arch }},mode=max
           outputs: |
             type=image,name=${{ env.DOCKERHUB_REPOSITORY }},name-canonical=true,push=true,push-by-digest=true
             type=image,name=${{ env.GHCR_REPOSITORY }},name-canonical=true,push=true,push-by-digest=true
