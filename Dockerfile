@@ -2,7 +2,7 @@
 
 ARG BASE_IMAGE=homebrew/brew
 FROM "${BASE_IMAGE}"
-WORKDIR /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core
+WORKDIR /home/linuxbrew/.linuxbrew/Homebrew
 
 ENV HOMEBREW_NO_AUTOREMOVE=1
 ENV HOMEBREW_NO_AUTO_UPDATE=1
