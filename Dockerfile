@@ -28,6 +28,9 @@ RUN <<-"EOF"
     fzf \
     ripgrep \
     vim
+  if [ "$(. /etc/os-release; echo "$VERSION_ID" | cut -d. -f1)" -ge 22 ]; then
+    sudo apt-get install -y --no-install-recommends hyperfine
+  fi
   sudo apt-get autoremove -y --purge
   sudo rm -rf /var/lib/apt/lists/*
   sudo ln -s /usr/bin/batcat /usr/local/bin/bat
