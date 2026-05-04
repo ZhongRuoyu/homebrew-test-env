@@ -20,7 +20,6 @@ env:
   DOCKERHUB_REPOSITORY: zhongruoyu/homebrew-test-env
   GHCR_USERNAME: zhongruoyu
   GHCR_REPOSITORY: ghcr.io/zhongruoyu/homebrew-test-env
-  BUILD_CACHE_REPOSITORY: ghcr.io/zhongruoyu/homebrew-test-env/cache
 
 jobs:
   build:
@@ -84,15 +83,12 @@ jobs:
         id: setup
         run: |
           {
-            echo "cache_from=type=registry,ref=$BUILD_CACHE_REPOSITORY:$TAG-$ARCH"
             if [[ "$PUSH" = true ]]; then
-              echo "cache_to=type=registry,ref=$BUILD_CACHE_REPOSITORY:$TAG-$ARCH,mode=max"
               echo "outputs<<OUTPUTS"
               echo "type=image,name=$DOCKERHUB_REPOSITORY,name-canonical=true,push=true,push-by-digest=true"
               echo "type=image,name=$GHCR_REPOSITORY,name-canonical=true,push=true,push-by-digest=true"
               echo "OUTPUTS"
             else
-              echo "cache_to="
               echo "outputs="
             fi
           } >> "$GITHUB_OUTPUT"
@@ -104,8 +100,6 @@ jobs:
         with:
           platforms: linux/${{ matrix.arch }}
           build-args: BASE_IMAGE
-          cache-from: ${{ steps.setup.outputs.cache_from }}
-          cache-to: ${{ steps.setup.outputs.cache_to }}
           outputs: ${{ steps.setup.outputs.outputs }}
       - name: Export digest
         run: |
