@@ -2,12 +2,7 @@
 
 ARG BASE_IMAGE=homebrew/brew
 FROM "${BASE_IMAGE}"
-
-ENV HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
-ENV HOMEBREW_CELLAR="/home/linuxbrew/.linuxbrew/Cellar"
-ENV HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew/Homebrew"
-
-WORKDIR "$HOMEBREW_REPOSITORY"
+WORKDIR /home/linuxbrew/.linuxbrew/Homebrew
 
 ENV HOMEBREW_NO_AUTOREMOVE=1
 ENV HOMEBREW_NO_AUTO_UPDATE=1
