@@ -60,5 +60,5 @@ jobs:
       base-image: ${{ matrix.base-image }}
       tags: ${{ matrix.tags }}
       arches: ${{ matrix.arches }}
-      push: ${{ github.ref_name == 'main' }}
+      push: ${{ github.ref == 'refs/heads/main' }}
     secrets: inherit
