@@ -18,6 +18,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ inputs.primary-tag }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash -euxo pipefail {0}
+
 env:
   DOCKERHUB_USERNAME: zhongruoyu
   DOCKERHUB_REPOSITORY: zhongruoyu/homebrew-test-env
