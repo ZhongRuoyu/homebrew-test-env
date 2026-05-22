@@ -9,7 +9,7 @@ ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV HOMEBREW_NO_INSTALL_FROM_API=1
 
 RUN <<-"EOF"
-  set -e
+  set -eux
 
   git clone https://github.com/ZhongRuoyu/dotfiles.git ~/.local/share/dotfiles
   ~/.local/share/dotfiles/install.sh
