@@ -1,4 +1,4 @@
-name: docker
+name: Docker
 
 on:
   workflow_dispatch:
@@ -15,162 +15,50 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  DOCKERHUB_USERNAME: zhongruoyu
-  DOCKERHUB_REPOSITORY: zhongruoyu/homebrew-test-env
-  GHCR_USERNAME: zhongruoyu
-  GHCR_REPOSITORY: ghcr.io/zhongruoyu/homebrew-test-env
-
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - tag: ubuntu24.04-latest
-            base-image: ghcr.io/homebrew/ubuntu24.04:latest
-            arch: x86_64
-          - tag: ubuntu24.04-latest
-            base-image: ghcr.io/homebrew/ubuntu24.04:latest
-            arch: aarch64
-          - tag: ubuntu24.04-main
-            base-image: ghcr.io/homebrew/ubuntu24.04:main
-            arch: x86_64
-          - tag: ubuntu24.04-main
-            base-image: ghcr.io/homebrew/ubuntu24.04:main
-            arch: aarch64
-          - tag: ubuntu22.04-latest
-            base-image: ghcr.io/homebrew/ubuntu22.04:latest
-            arch: x86_64
-          - tag: ubuntu22.04-latest
-            base-image: ghcr.io/homebrew/ubuntu22.04:latest
-            arch: aarch64
-          - tag: ubuntu22.04-main
-            base-image: ghcr.io/homebrew/ubuntu22.04:main
-            arch: x86_64
-          - tag: ubuntu22.04-main
-            base-image: ghcr.io/homebrew/ubuntu22.04:main
-            arch: aarch64
-          - tag: ubuntu20.04-latest
-            base-image: ghcr.io/homebrew/ubuntu20.04:latest
-            arch: x86_64
-    name: Build ${{ matrix.tag }} (${{ matrix.arch }})
-    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
-    permissions:
-      contents: read
-      packages: write
-    env:
-      TAG: ${{ matrix.tag }}
-      BASE_IMAGE: ${{ matrix.base-image }}
-      ARCH: ${{ matrix.arch }}
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-      - name: Login to Docker Hub
-        if: github.ref_name == 'main'
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Login to GitHub Container Registry
-        if: github.ref_name == 'main'
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USERNAME }}
-          password: ${{ github.token }}
-      - name: Set up build
-        id: setup
-        run: |
-          {
-            if [[ "$PUSH" = true ]]; then
-              echo "outputs<<OUTPUTS"
-              echo "type=image,name=$DOCKERHUB_REPOSITORY,name-canonical=true,push=true,push-by-digest=true"
-              echo "type=image,name=$GHCR_REPOSITORY,name-canonical=true,push=true,push-by-digest=true"
-              echo "OUTPUTS"
-            else
-              echo "outputs="
-            fi
-          } >> "$GITHUB_OUTPUT"
-        env:
-          PUSH: ${{ github.ref_name == 'main' }}
-      - name: Build and push Docker image by digest
-        id: build
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
-        with:
-          platforms: linux/${{ matrix.arch }}
-          build-args: BASE_IMAGE
-          outputs: ${{ steps.setup.outputs.outputs }}
-      - name: Export digest
-        run: |
-          mkdir -p "$RUNNER_TEMP"/digests
-          echo "${DIGEST#sha256:}" > "$RUNNER_TEMP"/digests/"$TAG-$ARCH"
-        env:
-          DIGEST: ${{ steps.build.outputs.digest }}
-      - name: Upload digest
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: digests-${{ matrix.tag }}-${{ matrix.arch }}
-          path: ${{ runner.temp }}/digests/*
-
-  merge:
-    if: github.ref_name == 'main'
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
           - primary-tag: ubuntu24.04-latest
-            tags: ubuntu24.04 noble
+            base-image: ghcr.io/homebrew/ubuntu24.04:latest
+            tags: |
+              ubuntu24.04-latest
+              noble
+            arches: x86_64 aarch64
           - primary-tag: ubuntu24.04-main
-            tags: ubuntu24.04-main noble-main
+            base-image: ghcr.io/homebrew/ubuntu24.04:main
+            tags: |
+              ubuntu24.04-main
+              noble-main
+            arches: x86_64 aarch64
           - primary-tag: ubuntu22.04-latest
-            tags: ubuntu22.04 jammy latest
+            base-image: ghcr.io/homebrew/ubuntu22.04:latest
+            tags: |
+              ubuntu22.04-latest
+              jammy
+              latest
+            arches: x86_64 aarch64
           - primary-tag: ubuntu22.04-main
-            tags: ubuntu22.04-main jammy-main main
+            base-image: ghcr.io/homebrew/ubuntu22.04:main
+            tags: |
+              ubuntu22.04-main
+              jammy-main
+              main
+            arches: x86_64 aarch64
           - primary-tag: ubuntu20.04-latest
-            tags: ubuntu20.04 focal
-    name: Merge ${{ matrix.primary-tag }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-      - name: Login to Docker Hub
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USERNAME }}
-          password: ${{ github.token }}
-      - name: Download digests
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          path: ${{ runner.temp }}/digests
-          pattern: digests-${{ matrix.primary-tag }}-*
-          merge-multiple: true
-      - name: Create manifest list and push
-        run: |
-          tags=()
-          for tag in $TAGS; do
-            tags+=(
-              "--tag=$DOCKERHUB_REPOSITORY:$tag"
-              "--tag=$GHCR_REPOSITORY:$tag"
-            )
-          done
-
-          images=()
-          for digest in "$RUNNER_TEMP"/digests/"$PRIMARY_TAG"-*; do
-            images+=("$GHCR_REPOSITORY@sha256:$(cat "$digest")")
-          done
-
-          docker buildx imagetools create "${tags[@]}" "${images[@]}"
-        env:
-          PRIMARY_TAG: ${{ matrix.primary-tag }}
-          TAGS: ${{ matrix.tags }}
+            base-image: ghcr.io/homebrew/ubuntu20.04:latest
+            tags: |
+              ubuntu20.04-latest
+              focal
+            arches: x86_64
+    name: Build - ${{ matrix.primary-tag }}
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      primary-tag: ${{ matrix.primary-tag }}
+      base-image: ${{ matrix.base-image }}
+      tags: ${{ matrix.tags }}
+      arches: ${{ matrix.arches }}
+      push: ${{ github.ref_name == 'main' }}
+    secrets: inherit

@@ -1,0 +1,166 @@
+name: Build and push Docker images
+
+on:
+  workflow_call:
+    inputs:
+      primary-tag:
+        type: string
+      base-image:
+        type: string
+      tags:
+        type: string
+      arches:
+        type: string
+      push:
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.primary-tag }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOCKERHUB_USERNAME: zhongruoyu
+  DOCKERHUB_REPOSITORY: zhongruoyu/homebrew-test-env
+  GHCR_USERNAME: zhongruoyu
+  GHCR_REPOSITORY: ghcr.io/zhongruoyu/homebrew-test-env
+
+jobs:
+  setup:
+    name: Set up build - ${{ inputs.primary-tag }}
+    runs-on: ubuntu-latest
+    outputs:
+      tags: ${{ steps.metadata.outputs.tags }}
+      labels: ${{ steps.metadata.outputs.labels }}
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Determine Docker image metadata
+        id: metadata
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        with:
+          images: |
+            ${{ env.DOCKERHUB_REPOSITORY }}
+            ${{ env.GHCR_REPOSITORY }}
+          flavor: |
+            latest=false
+          tags: ${{ inputs.tags }}
+      - name: Set up build matrix
+        id: matrix
+        run: |
+          matrix_json='{"arch": []}'
+          for ARCH in $ARCHES; do
+            matrix_json="$(
+              echo "$matrix_json" |
+                jq --compact-output --arg arch "$ARCH" '.arch += [$arch]'
+            )"
+          done
+          echo "matrix=$matrix_json" >>"$GITHUB_OUTPUT"
+        env:
+          ARCHES: ${{ inputs.arches }}
+
+  build:
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
+    name: Build ${{ inputs.primary-tag }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+      - name: Login to Docker Hub
+        if: inputs.push
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        if: inputs.push
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USERNAME }}
+          password: ${{ github.token }}
+      - name: Set up build
+        id: setup
+        run: |
+          {
+            if [[ "$PUSH" = true ]]; then
+              echo "outputs<<OUTPUTS"
+              echo "type=image,name=$DOCKERHUB_REPOSITORY,name-canonical=true,push=true,push-by-digest=true"
+              echo "type=image,name=$GHCR_REPOSITORY,name-canonical=true,push=true,push-by-digest=true"
+              echo "OUTPUTS"
+            else
+              echo "outputs="
+            fi
+          } >> "$GITHUB_OUTPUT"
+        env:
+          PUSH: ${{ inputs.push }}
+      - name: Build and push Docker image by digest
+        id: build
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        with:
+          platforms: linux/${{ matrix.arch }}
+          labels: ${{ needs.setup.outputs.labels }}
+          build-args: BASE_IMAGE=${{ inputs.base-image }}
+          outputs: ${{ steps.setup.outputs.outputs }}
+      - name: Export digest
+        run: |
+          mkdir -p "$RUNNER_TEMP"/digests
+          echo "${DIGEST#sha256:}" >"$RUNNER_TEMP"/digests/"$PRIMARY_TAG-$ARCH"
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          PRIMARY_TAG: ${{ inputs.primary-tag }}
+          ARCH: ${{ matrix.arch }}
+      - name: Upload digest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: digests-${{ inputs.primary-tag }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+
+  merge:
+    if: inputs.push
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+    name: Merge ${{ inputs.primary-tag }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+      - name: Login to Docker Hub
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USERNAME }}
+          password: ${{ github.token }}
+      - name: Download digests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ inputs.primary-tag }}-*
+          merge-multiple: true
+      - name: Create manifest list and push
+        run: |
+          mapfile -t tags <<< "$TAGS"
+          tag_args=()
+          for tag in "${tags[@]}"; do
+            tag_args+=(--tag="$tag")
+          done
+          images=()
+          for ARCH in $ARCHES; do
+            images+=("$GHCR_REPOSITORY@sha256:$(cat "$RUNNER_TEMP"/digests/"$PRIMARY_TAG-$ARCH")")
+          done
+          docker buildx imagetools create "${tag_args[@]}" "${images[@]}"
+        env:
+          PRIMARY_TAG: ${{ inputs.primary-tag }}
+          ARCHES: ${{ inputs.arches }}
+          TAGS: ${{ needs.setup.outputs.tags }}
