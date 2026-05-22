@@ -18,7 +18,7 @@ if [[ "$pr" =~ ^[0-9]+$ ]]; then
 
   while true; do
     origin_url="$(git remote get-url origin)"
-    repo="$(sed -E 's#^(git@github\.com:|https://github\.com/)([^/]+/[^/.]+)(\.git)?$#\2#' <<<"$origin_url")"
+    repo="$(sed -E 's#^(https://github\.com/|git@github\.com:|ssh://git@github\.com/)([^/]+/[^/.]+)(\.git)?$#\2#' <<<"$origin_url")"
     if [[ -z "$repo" ]]; then
       break
     fi
