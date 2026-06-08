@@ -32,26 +32,26 @@ jobs:
             tags: |
               ubuntu24.04-latest
               noble
+              latest
             arches: x86_64 aarch64
           - primary-tag: ubuntu24.04-main
             base-image: ghcr.io/homebrew/ubuntu24.04:main
             tags: |
               ubuntu24.04-main
               noble-main
+              main
             arches: x86_64 aarch64
           - primary-tag: ubuntu22.04-latest
             base-image: ghcr.io/homebrew/ubuntu22.04:latest
             tags: |
               ubuntu22.04-latest
               jammy
-              latest
             arches: x86_64 aarch64
           - primary-tag: ubuntu22.04-main
             base-image: ghcr.io/homebrew/ubuntu22.04:main
             tags: |
               ubuntu22.04-main
               jammy-main
-              main
             arches: x86_64 aarch64
           - primary-tag: ubuntu20.04-latest
             base-image: ghcr.io/homebrew/ubuntu20.04:latest
