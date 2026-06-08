@@ -27,6 +27,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - primary-tag: ubuntu26.04-latest
+            base-image: ghcr.io/homebrew/ubuntu26.04:latest
+            tags: |
+              ubuntu26.04-latest
+              resolute
+            arches: x86_64 aarch64
+          - primary-tag: ubuntu26.04-main
+            base-image: ghcr.io/homebrew/ubuntu26.04:main
+            tags: |
+              ubuntu26.04-main
+              resolute-main
+            arches: x86_64 aarch64
           - primary-tag: ubuntu24.04-latest
             base-image: ghcr.io/homebrew/ubuntu24.04:latest
             tags: |
