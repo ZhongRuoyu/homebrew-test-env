@@ -66,7 +66,7 @@ jobs:
               jammy-main
             arches: x86_64 aarch64
           - primary-tag: ubuntu20.04-latest
-            base-image: ghcr.io/homebrew/ubuntu20.04:latest
+            base-image: homebrew/ubuntu20.04:latest
             tags: |
               ubuntu20.04-latest
               focal
