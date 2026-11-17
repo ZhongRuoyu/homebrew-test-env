@@ -17,6 +17,7 @@ RUN <<-"EOF"
   brew update
   brew install-bundler-gems --groups=all
   brew tap zhongruoyu/test-env
+  brew trust zhongruoyu/test-env
   brew cleanup
   rm -rf "$(brew --cache)"
 
